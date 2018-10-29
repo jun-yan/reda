@@ -1,0 +1,62 @@
+---
+title: "Statistical Analysis of Recurrent Events"
+subtitle: "A Workshop"
+author: |
+  | Jun Yan
+  | Department of Statistics
+  | University of Connecticut
+date: November 2, 2018
+bibliography: recurr.bib
+---
+
+
+```{r setup, echo = FALSE}
+options(width = 90)
+```
+
+## Preliminaries
+
+- SIAM workshop on R by Wenjie Wang
+    + [session one](https://wenjie-stat.me/2018-01-19-siam/);
+    [source repo](https://github.com/wenjie2wang/2018-01-19-siam/)
+    + [session two](https://wenjie-stat.me/2018-04-06-siam/);
+    [source repo](https://github.com/wenjie2wang/2018-04-06-siam/)
+
+- CRAN task view on [https://][survival]
+
+- R packages [https://][reda]
+
+- @cook2007statistical: The Statistical Analysis of Recurrent Events 
+
+
+## Outline
+
+- Introduction
+
+- Exploratary analysis
+
+- Two sample comparison
+
+- Regression Models
+
+- Joint modeling with a terminal event
+
+- Further topics
+
+
+## Examples of Recurrent Events
+
+- Exacerbations in cyctic fibrosis patients
+
+- hospitalization of psychiatric patients with early onset of schizophrenia
+
+- infections of kidney transplant patients
+
+- tumors of bladder cancer patients
+
+- snowmobil warranty claims (seasonal pattern)
+
+- unintentional lane change of truck drivers in a trip
+
+
+## References {-}
