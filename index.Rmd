@@ -6,27 +6,92 @@ author: |
   | Department of Statistics
   | University of Connecticut
 date: November 2, 2018
-bibliography: recurr.bib
+bibliography: [packages.bib, reReg.bib, reda.bib]
+link-citation: yes
 ---
 
-
-```{r setup, echo = FALSE}
-options(width = 90)
-```
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\dd}{\mathrm{d}}
+\newcommand{\sgn}{\mathrm{sgn}}
+\newcommand{\bx}{\textbf{x}}
+\newcommand{\bX}{\textbf{X}}
+\newcommand{\bz}{\textbf{z}}
+\newcommand{\bbeta}{\boldsymbol{\beta}}
+\newcommand{\bPsi}{\boldsymbol{\Psi}}
 
 ## Preliminaries
 
 - SIAM workshop on R by Wenjie Wang
     + [session one](https://wenjie-stat.me/2018-01-19-siam/);
-    [source repo](https://github.com/wenjie2wang/2018-01-19-siam/)
+      [source repo](https://github.com/wenjie2wang/2018-01-19-siam/)
     + [session two](https://wenjie-stat.me/2018-04-06-siam/);
-    [source repo](https://github.com/wenjie2wang/2018-04-06-siam/)
+      [source repo](https://github.com/wenjie2wang/2018-04-06-siam/)
 
-- CRAN task view on [https://][survival]
+- CRAN task view on survival:
+  (https://cran.r-project.org/web/views/Survival.html)
 
-- R packages [https://][reda]
+- R packages:
+    [__aftgee__](https://CRAN.R-project.org/package=aftgee);
+    [__reda__](https://CRAN.R-project.org/package=reda);
+    [__reReg__](https://CRAN.R-project.org/package=reReg)
 
-- @cook2007statistical: The Statistical Analysis of Recurrent Events 
+- @cook2007statistical: The Statistical Analysis of Recurrent Events
+
+- Recurrent Event Data Analysis with R
+
+## R Packages
+
+```{r setup, include=FALSE, echo = FALSE}
+options(width = 90)
+```
+
+
+```{r pkgs-slides, eval = FALSE}
+## for reproducing the slides
+install.packages("revealjs")
+## for following examples
+pkgs <- c("aftgee", "reda", "reReg", "spef",
+          "frailtyPack", "prodlim")
+install.packages(pkgs)
+```
+
+
+```{r need-packages, echo = FALSE}
+##' Check, Install and Attach Multiple R packages Specified
+##'
+##' The function first Checks whether the packages given were installed. Then
+##' install them if they are not, then attach them to the search path.
+##'
+##' @usage need.packages(pkg)
+##' @param pkg A character vector specifying the packages needed to reproduce
+##'     this document.
+##' @param ... Other arguments passed to function \code{\link[base]require}.
+##' @return NULL invisibly.
+##' @examples
+##' need.pacakges(c("ggplot2", "geepack"))
+need.packages <- function(pkg, ...)
+{
+    new.pkg <- pkg[! (pkg %in% installed.packages()[, "Package"])]
+    if (length(new.pkg))
+        install.packages(new.pkg, repos = "https://cloud.r-project.org")
+    foo <- function(a, ...) suppressMessages(require(a, ...))
+    sapply(pkg, foo, character.only = TRUE)
+    invisible(NULL)
+}
+pkgs <- c("aftgee", "reda", "reReg",
+          "frailtypack", "prodlim")
+need.packages(pkgs)
+```
+
+
+```{r include = FALSE, echo = FALSE}
+# automatically create a bib database for R packages
+knitr::write_bib(c(
+  .packages(), # 'bookdown', 'knitr', 'rmarkdown',
+  'aftgee', 'reda', 'reReg',
+  'frailtypack', 'dplyr'
+  ), 'packages.bib')
+```
 
 
 ## Outline
@@ -34,8 +99,6 @@ options(width = 90)
 - Introduction
 
 - Exploratary analysis
-
-- Two sample comparison
 
 - Regression Models
 
@@ -58,5 +121,369 @@ options(width = 90)
 
 - unintentional lane change of truck drivers in a trip
 
+
+## Notations
+
+- $N(t)$: number of events by time $t$
+- $T_1, T_2, \ldots$: event times where $\dd N(T_j) = 1$
+- $X$: covariate vector
+- $Z$: random effect or frailty
+- $C$: a noninformative censoring time ($C \perp N(\cdot) \mid X$)
+- $D$: an informative censoring time
+- $\tau$: end of study time
+- $Y = \min(C, D, \tau)$: followup time
+
+- $\{N_i(t), Y_i, X_i; t \le Y_i, i = 1, \ldots, n\}$:
+  independent and identically distributed copies
+
+## Representing Recurrent Event Data
+
+```{r reSurv}
+library(reReg)
+data(readmission, package = "frailtypack")
+reObj <- with(readmission, reSurv(t.stop, id, event, death))
+dplyr::glimpse(print(reObj), width = 75)
+```
+
+## Event Plots
+```{r eventPlot}
+plotEvents(reSurv(t.stop, id, event, death) ~ 1, data = readmission)
+```
+
+---
+```{r eventPlotStrat}
+plotEvents(reSurv(t.stop, id, event, death) ~ sex + chemo,
+           data = readmission, main = "Stratified by sex and chemo")
+```
+
+## Intensity, Rate, and Mean Functions
+
+- Intensity
+
+- Rate
+
+- Mean
+
+## Mean Cumulative Function (MCF)
+
+
+## Group Comparison
+
+
+## Model Frameworks
+
+- Event counts
+
+
+- Gap times
+
+## Gap Time Analysis
+
+- Clustered event times
+
+- Kaplan--Meier estimate for clustered data; package __prodlim__.
+
+- Length-biased sampling issue
+  + Effect in nonparametric survival curve estimate
+  + Effect in regression analysis
+  + Easy fix: drop the last censored time unless if it is also the first.
+
+
+## Regression for Gap Times
+
+- Cox-type
+  + Conditional
+  + Marginal
+  + `coxph()` in package __survival__
+  
+- Accelerated failure time (AFT)
+
+- General class of hazards regression
+
+- Transformation models
+
+## Semiparametric Marginal AFT Models
+
+- Model
+
+- Rank-based inference
+
+- Induced smoothing technique
+
+- Variance estimation
+
+- Package __aftgee__
+
+## Regression for Counting Process: Noninformative Censoring
+
++ Proportional intensities [@andersen1982]
+  
++ Proportional rates (means) [@pepe1993some; @lawless1995some; @lin2000semiparametric]
+  
++ Accelerated rate [@chen2000estimating]
+  
++ Accelerated mean [@lin1998]
+  
++ Generalized scale change [@sun2008]
+  
++ Additive rate [@schaubel2006semiparametric]
+  
++ Additive-multiplicative rate [@liu2010additive]
+
+## Informative Censoring
+
+- Failure to account gives misleading results
+
+- Joint frailty models 
+  + Cox-type [@liu2004; @ye2007; @Kalbfleisch2013]
+  + Transformation [@zeng2009semiparametric]
+
+- Captures the association between $D$ and $N(t)$ through $Z$
+
+- Accounts for heterogeneity not explained by $X$
+
+- Often requires a parametric assumption on the frailty $Z$
+
+- Depends on correct modeling of $D$ in addition to $N(\cdot)$
+
+## Informative Censoring: No Parametric Assumption on Frailty
+
++ Cox-type [@wang2001; @Huang2004; @Huang2010]
+
++ Accerlated mean [@xu2017joint]
+
++ Captures the association between $D$ and $N(t)$ through $Z$
+
++ Accounts for heterogeneity not explained by $X$
+
++ No parametric assumption on the frailty $Z$
+
++ No model specification needed for $D$
+
++ May not be most efficient
+
+## Function `reReg()` in Package __reReg__
+
+```{r}
+args(reReg::reReg)
+```
+
+- Currently 6 methods, 4 of which are joint modeling with the terminal event
+
+- Variance estimation
+  + `NULL`
+  + `bootstrap`
+  + `resampling`
+
+
+## Cox-Type Porportional Rates (Means)
+
+- Uninformative censoring [@lin2000semiparametric]
+\[
+r(t \mid X) = r_0(t) \exp(X^{\top}(t) \beta)
+\]
+
+- `reReg::reReg()` is a wrapper to `survival::coxph()`
+
+```{r cox.lwyy}
+summary(fit <- reReg(reSurv(t.stop, id, event, death) ~ sex + chemo,
+                     data = subset(readmission, id < 50), 
+                     method = "cox.LWYY"))
+```
+
+
+## Cox-Type Proportional Rates (Means)
+
+- Informative censoring through a fraility [@Wang2001]
+\[
+  r(t \mid X, Z) = Z r_0(t) \exp(X^{\top}(t) \beta)
+\]
+where $E(Z \mid X) = E(Z) = \mu_Z$ and $\Lambda(\tau) = 1$ for identifiability.
+
+- No Poission assumption
+
+- No distributional assumption on the frailty
+
+- Can be fit with `reReg::reReg()` with `method = 'cox.HW'`, which additionlly fits a Cox-type model for the terminal event [@huang2004]
+
+## Accelerated Mean
+
+- Uninformative censoring 
+\[
+  \mu(t \mid X) = \mu_0(t e^{-X^{\top}\beta})
+\]
+  + Can be fit with `reReg::reReg()` with `method = 'am.GL'`, which additionally fits an AFT model for the terminal event [@ghosh2003].
+
+- Informative censoring
+\[
+  r(t \mid X) = Z r_0(t e^{X^{\top}\beta}) e^{X^{\top}\beta}
+\]
+  + $Y \perp N() \mid (X, Z)$
+  + No distributional assumption on $Z$
+  + Can be fit with `reReg::reReg()` with `method = 'am.XCHWY'`, which additionaly fits an AFT model for the terminal event [@xu2017joint].
+
+## Generalized Scale Change Model
+
+- Xu, Chiou, Yan, Marr, and Huang (2018+, Stat. Sinica)
+\[
+\lambda(t | X, Z) = Z \lambda_0(t e^{X_i^\top\alpha}) e^{X_i^\top\beta}, \qquad t\in[0, \tau].
+\]
+  + $Y \perp N() \mid (X, Z)$ but no model specified for $Y$
+  + No distributional assumption for $Z$
+  
+- Identifiability conditions:
+  + $\int_0^\tau r_0(u) \dd u = 1$.
+  + $E(Z \mid X) = \mu_z$ is an unknown constant.
+  + $r_0()$ is not Weibull.
+  
+- Submodels and Model Selection
+  + Cox-type model: $\alpha = 0$
+  + Accelerated rate model: $\beta = 0$
+  + Accelerated mean model: $\alpha = \beta$
+
+## Interpretation
+
+- The interpretation of the covariate effects involves two types of modification on the rate function: 
+  + a scale-change effect that alters the time scale by a factor of $e^{X_i^\top\alpha}$.
+  
+  + a multiplicative effect that modifies the magnitude of the rate function by 
+a factor of $e^{X_i^\top\beta}$.
+
+- When the two effects have a specific form ($\alpha = \beta$), the combined effect transforms the time scael of the mean function.
+
+## Estimating Procedure
+
+- Two step estimation: 
+
+  + First $\alpha$ and $\Lambda_0(t) = \int_0^t\lambda_0(u) \dd u$
+
+  + Second $\beta$ given $\hat\alpha$
+
+- No need to estimate the unobserved frailty $Z$.
+
+- No need to require a Poisson assumption.
+
+- No need to model terminal events.
+
+## Estimation of $\alpha$ and $\Lambda_0$
+
+- Consider time transformation (scale change) 
+  + $t^*_{ij} = t_{ij}e^{X_i^\top \alpha}$
+  + $Y_i^* = Y_ie^{X_i^\top \alpha}$
+
+- The transformed counting process implies
+\begin{equation*}
+\E\{N_i^*(t)|X_i, Z_i, Y_i^*\} = Z_i\Lambda_0(t)e^{X_i^\top (\beta-\alpha)},
+\label{eq1}
+\end{equation*}
+
+- The mean function follows the Cox-type proportional model with a multiplicative frailty.
+
+## Estimation of $\alpha$ and $\Lambda_0$
+
+- Condition on $\{X_i, Z_i, Y_i, m_i\}$, the $m_i$ event times $t^*_{ij}$'s can be seen as order statistics of iid random variables with (truncation) density function:
+\begin{equation*}
+\frac{Z_i\lambda_0(t)e^{-X_i^\top (\beta-\alpha)}}{Z_i\Lambda_0(Y_i^*)e^{-X_i^\top (\beta-\alpha)}}
+=\frac{\lambda_0(t)}{\Lambda_0(Y^*_i)}, t \le Y_i^*.
+\end{equation*}
+\item This (truncation) density implies
+\begin{equation}
+\E\{N_i^*(t)|X_i, Z_i, Y_i^*, m_i\} = \sum_{j=1}^{m_i}P(t_{ij}^*\le t) = m_i\frac{\Lambda_0(t)}{\Lambda_0(Y_i^*)}, t\le Y_i^*.
+\label{eq2}
+\end{equation}
+
+- This motivates us to extend methods for right-truncated survival data [@wang1989semiparametric to construct estimating equation.
+\end{frame}
+
+
+## Estimation of $\alpha$ and $\Lambda_0$
+
+- We derive a zero mean stochastic process
+$$M_i^*(t) = N_i^*(t) - \int_0^tR_i^*(u)\dif H(u), $$
+for $R_i^*(t) = \sum_{j=1}^{m_i}\mathbbm{1}\{t_{ij}^*\le t\le Y_i^*\}$, 
+$H(t) = \log \Lambda_0(t)$.
+
+- $M_i^*(t)$ is a zero mean stochastic process, we have 
+\[
+\E\left\{ \sum_{i=1}^n\int_0^t\dif M_i^*(u) \right\}=0
+\]
+and 
+\[
+\E\left\{ \sum_{i=1}^n\int_0^tX_i\,\dd M_i^*(u) \right\}=0
+\]
+
+
+## Estimation of $\alpha$ and $\Lambda_0$
+
+- This gives us two estimating equations:
+$$n^{-1}\sum_{i=1}^n\int_0^\infty\left\{X_i - \frac{\sum_{j = 1}^nX_jR_j^*(t)}{\sum_{j = 1}^nR_j^*(t)}\right\}\dd N_i^*(t) = 0$$
+and
+$$\widehat H_n(t, a) = -\int_t^\infty\frac{\sum_{i=1}^n\dd N_i^*(u)}{\sum_{i=1}^nR_i^*(u)}.$$
+
+- $\Lambda_0(t)$ can be estimated by $\exp\{\widehat H_n(t)\}$.
+
+- Computing intensive as the estimating functions are non-smooth
+
+- Derivative-free algorithm of @barzilai1988two
+
+
+## Estimation of $\beta$
+
+- Under our model $\lambda_i(t) = Z_i\lambda_0(te^{X_i^\top\alpha})e^{X_i^\top\beta}$,
+$m_i$ satisfies 
+$$\E(m_i|X_i, Y_i^*, Z_i) = Z_i\Lambda_0(Y_i^*)e^{X_i^\top(\beta-\alpha)} $$
+
+- This gives an estimating equation to solve for $\beta$:
+\begin{equation*}
+n^{-1}\sum_{i=1}^nX_i\left[m_i\hat\Lambda_n^{-1}\{Y_i^*(\hat \alpha_n)\} - e^{X_i^\top(\beta - \hat\alpha_n)}\right]=0
+\end{equation*}
+
+
+## Asymptotic Results
+
+\begin{theorem}\label{thm:weak}
+Under Conditions 1--5, $n^{1/2}(\hat\alpha_n-\alpha, \hat\beta_n-\beta)$
+converges weakly to a multivariate normal distribution with mean zero and
+covariance matrix $\Sigma(\alpha,\beta)$ specified in the Appendix 1 of the Supplementary material.
+Furthermore, for the estimated baseline rate function, we have
+$n^{1/2}\{\hat\Lambda_n(t,\hat\alpha_n)-\Lambda_0(t)\}$, $t\in [0,\tau]$,
+converges weakly to a mean-zero Gaussian process.
+\end{theorem}
+
+
+## Variance Estimation
+
+- The target sandwich variance estimator:
+ $\Sigma = J_{\alpha, \beta}^{-1}V_{\alpha, \beta}J_{\alpha, \beta}^{-1}$.
+ 
+- A resampling approach to estimate the covariance matrix [@zeng2008]
+
+  + Estimation of $V_{\alpha,\beta}$: Perturbed estimating functions with
+    multipliers of unit mean and unit variance.
+      - No need to solve the equations.
+    
+  - Estimation of the slope matrix $J_{\alpha,\beta}$:
+    Regressing perturbed estimating functions on perturbation.
+
+- Allows model selection through testing $\alpha = 0$, $\beta = 0$, and $\alpha = \beta$.
+
+
+## Fitting Generalized Scale Change Model
+
+```{r sc}
+summary(fit <- reReg(reSurv(t.stop, id, event, death) ~ sex + chemo,
+                     data = subset(readmission, id < 50), 
+                     method = "cox.LWYY"))
+```
+
+## Joint Modeling with a Terminal Event
+
+## Further Topics
+
+- Panel count data (interval censored recurrent event data)
+
+- Zero inflated model (hurdle model)
+
+- Dynamic time-varying coefficient model
 
 ## References {-}
