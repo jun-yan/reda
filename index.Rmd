@@ -45,22 +45,8 @@ link-citation: yes
 options(width = 90)
 ```
 
-
-```{r pkgs-slides, eval = FALSE}
-## for reproducing the slides
-install.packages("revealjs")
-## for following examples
-pkgs <- c("aftgee", "reda", "reReg", "spef",
-          "frailtyPack", "prodlim")
-install.packages(pkgs)
-```
-
-
-```{r need-packages, echo = FALSE}
-##' Check, Install and Attach Multiple R packages Specified
-##'
-##' The function first Checks whether the packages given were installed. Then
-##' install them if they are not, then attach them to the search path.
+```{r need-packages}
+##' Load needed packages, and install them if not installed.
 ##'
 ##' @usage need.packages(pkg)
 ##' @param pkg A character vector specifying the packages needed to reproduce
@@ -86,11 +72,10 @@ need.packages(pkgs)
 
 
 ```{r include = FALSE, echo = FALSE}
-# automatically create a bib database for R packages
+## automatically create a bib database for R packages
 knitr::write_bib(c(
-  .packages(), # 'bookdown', 'knitr', 'rmarkdown',
-  'aftgee', 'reda', 'reReg',
-  'frailtypack', 'dplyr'
+  # .packages(), 
+  pkgs
   ), 'packages.bib')
 ```
 
@@ -134,7 +119,7 @@ knitr::write_bib(c(
 - $\tau$: end of study time
 - $Y = \min(C, D, \tau)$: followup time
 
-- $\{N_i(t), Y_i, X_i; t \le Y_i, i = 1, \ldots, n\}$:
+- $\{N_i(t), Y_i, X_i: t \le Y_i, i = 1, \ldots, n\}$:
   independent and identically distributed copies
 
 ## Representing Recurrent Event Data
@@ -152,6 +137,7 @@ reReg::plotEvents(reSurv(t.stop, id, event, death) ~ 1, data = readmission)
 ```
 
 ---
+
 ```{r eventPlotStrat}
 reReg::plotEvents(reSurv(t.stop, id, event, death) ~ sex + chemo,
                   data = readmission, main = "Stratified by sex and chemo")
@@ -163,8 +149,8 @@ reReg::plotEvents(reSurv(t.stop, id, event, death) ~ sex + chemo,
 \[
 \lambda(t \mid H_t) = \lim_{\delta \to 0} \frac{\Pr\{N(t + \delta) - N(t-) = 1 \mid H_t\}}{\delta}
 \]
-
 where $H_t = \{N(s): 0 \le s < t\}$ is the whole history of the process up to $t$
+
   + Intensity fully specifies a counting process
 
 - Rate
@@ -411,7 +397,8 @@ where $E(Z \mid X) = E(Z) = \mu_Z$ and $\Lambda(\tau) = 1$ for identifiability.
 
 ## Interpretation
 
-- The interpretation of the covariate effects involves two types of modification on the rate function: 
+- The interpretation of the covariate effects involves two types of modification on the rate function:
+
   + a scale-change effect that alters the time scale by a factor of $e^{X_i^\top\alpha}$.
   
   + a multiplicative effect that modifies the magnitude of the rate function by 
@@ -569,14 +556,14 @@ summary(fit <- reReg(reSurv(t.stop, id, event, death) ~ sex + chemo,
 
 - Two-step estimation
   + First estimate $\alpha$ and $\Lambda()$ [@Wang2001]
-  - Second estimate $\beta$ and $H()$ with the "borrow-strength" method, i.e., plugging an estimate of $Z_i$ from a byproduct of the first step
+  + Second estimate $\beta$ and $H()$ with the "borrow-strength" method, i.e., plugging an estimate of $Z_i$ from a byproduct of the first step
 
 ## Cox-Type under Informative Censoring
 
 ```{r coxHW}
 summary(fit <- reReg(reSurv(t.stop, id, event, death) ~ sex + chemo,
                      data = subset(readmission, id < 50), 
-                     method = "sc.XCYH", se = "resampling", B = 50))
+                     method = "cox.HW", se = "resampling", B = 50))
 ```
 
 
@@ -609,7 +596,7 @@ summary(fit <- reReg(reSurv(t.stop, id, event, death) ~ sex + chemo,
 
 ## Further Topics
 
-- Simulation of event times with possibly informative censoring (`reReg::simSC()` and `reda::simEvent`)
+- Simulation of event times with possibly informative censoring (`reReg::simSC()` and `reda::simEvent()`)
 
 - Panel count data (interval censored recurrent event data) with package __spef__
   [@chiou2018semiparametric]
