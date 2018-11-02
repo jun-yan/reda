@@ -79,7 +79,8 @@ need.packages <- function(pkg, ...)
     invisible(NULL)
 }
 pkgs <- c("aftgee", "reda", "reReg",
-          "frailtypack", "prodlim")
+          "frailtypack", "prodlim",
+          "bookdown", "revealjs")
 need.packages(pkgs)
 ```
 
@@ -147,33 +148,97 @@ dplyr::glimpse(print(reObj), width = 75)
 
 ## Event Plots
 ```{r eventPlot}
-plotEvents(reSurv(t.stop, id, event, death) ~ 1, data = readmission)
+reReg::plotEvents(reSurv(t.stop, id, event, death) ~ 1, data = readmission)
 ```
 
 ---
 ```{r eventPlotStrat}
-plotEvents(reSurv(t.stop, id, event, death) ~ sex + chemo,
-           data = readmission, main = "Stratified by sex and chemo")
+reReg::plotEvents(reSurv(t.stop, id, event, death) ~ sex + chemo,
+                  data = readmission, main = "Stratified by sex and chemo")
 ```
 
 ## Intensity, Rate, and Mean Functions
 
 - Intensity
+\[
+\lambda(t \mid H_t) = \lim_{\delta \to 0} \frac{\Pr\{N(t + \delta) - N(t-) = 1 \mid H_t\}}{\delta}
+\]
+
+where $H_t = \{N(s): 0 \le s < t\}$ is the whole history of the process up to $t$
+  + Intensity fully specifies a counting process
 
 - Rate
+\[
+r(t) = \E\left[\lim_{\delta \to 0}\frac{N(t + \delta) - N(t-)}{\delta}\right] = \E[\dd N(t)]
+\]
 
 - Mean
+\[
+\mu(t) = \E[N(t)]
+\]
+
 
 ## Mean Cumulative Function (MCF)
 
+- Robust MCF [@lawless1995some]
+\[
+  \hat\mu_n(t) = \sum_{i = 1}^n\int_0^t R_\cdot^{-1}(t) \dd N_i(t), 
+\]
+where $R_\cdot(t) = \sum_{i=1}^n R_i(t)$, and
+$R_i(t) = 1(Y_i > t)$ is the at-risk indicator.
 
-## Group Comparison
+- Group comparisons based on MCF [@cook1996robust]
 
+## MCF
+
+```{r mcf}
+library(reda)
+mymcf <- reda::mcf(reda::Survr(id, t.stop, event) ~ 1, data = readmission)
+plot(mymcf, conf.int = TRUE, mark.time = TRUE, addOrigin = TRUE, col = 2) +
+    ggplot2::xlab("Days") + ggplot2::theme_bw()
+```
+
+## Group Comparison with MCF
+
+```{r mcfComp}
+mcf0 <- reda::mcf(reda::Survr(id, t.stop, event) ~ chemo, data = readmission)
+plot(mcf0, conf.int = TRUE)
+```
+
+
+## Group Comparison with MCF
+
+```{r mcfDiff}
+(myMcfDiff <- mcfDiff(mcf0))
+```
+
+---
+```{r plotMcfDiff}
+plot(myMcfDiff)
+```
+
+## Flexible Baseline Rate with Shape-Restricted Splines
+```{r splines}
+mySplFit <- reda::rateReg(reda::Survr(id, t.stop, event) ~ chemo + sex, 
+                          data = readmission)
+summary(mySplFit)
+```
+
+---
+
+```{r splPlot}
+plot(mcf(mySplFit), conf.int = TRUE)
+```
 
 ## Model Frameworks
 
-- Event counts
+- Counting process
 
+  + Intensity
+
+  + Rate
+  
+  + Mean
 
 - Gap times
 
@@ -189,30 +254,33 @@ plotEvents(reSurv(t.stop, id, event, death) ~ sex + chemo,
   + Easy fix: drop the last censored time unless if it is also the first.
 
 
-## Regression for Gap Times
+## Semiparametric Regression for Gap Times
 
 - Cox-type
-  + Conditional
+  + Conditional 
   + Marginal
   + `coxph()` in package __survival__
   
 - Accelerated failure time (AFT)
 
-- General class of hazards regression
+- General class of hazards regression [@chen2001general]
 
 - Transformation models
 
 ## Semiparametric Marginal AFT Models
 
 - Model
+\[
+\log T = X^{\top} \beta + \epsilon
+\]
 
-- Rank-based inference
+- Rank-based inference [@Chio:Kang:Kim:Yan:marg:2014]
 
-- Induced smoothing technique
+- Induced smoothing technique [@Chio:Kang:Yan:rank:2015]
 
-- Variance estimation
+- Variance estimation [@Chio:Kang:Yan:fast:2014]
 
-- Package __aftgee__
+- Package __aftgee__ [@Chio:Kang:Yan:fitt:2014]
 
 ## Regression for Counting Process: Noninformative Censoring
 
@@ -392,20 +460,19 @@ a factor of $e^{X_i^\top\beta}$.
 \label{eq2}
 \end{equation}
 
-- This motivates us to extend methods for right-truncated survival data [@wang1989semiparametric to construct estimating equation.
-\end{frame}
+- This motivates estimating equations using right-truncated survival data [@wang1989semiparametric]
 
 
 ## Estimation of $\alpha$ and $\Lambda_0$
 
 - We derive a zero mean stochastic process
-$$M_i^*(t) = N_i^*(t) - \int_0^tR_i^*(u)\dif H(u), $$
-for $R_i^*(t) = \sum_{j=1}^{m_i}\mathbbm{1}\{t_{ij}^*\le t\le Y_i^*\}$, 
+$$M_i^*(t) = N_i^*(t) - \int_0^tR_i^*(u)\dd H(u), $$
+for $R_i^*(t) = \sum_{j=1}^{m_i} {1}\{t_{ij}^*\le t\le Y_i^*\}$, 
 $H(t) = \log \Lambda_0(t)$.
 
 - $M_i^*(t)$ is a zero mean stochastic process, we have 
 \[
-\E\left\{ \sum_{i=1}^n\int_0^t\dif M_i^*(u) \right\}=0
+\E\left\{ \sum_{i=1}^n\int_0^t\dd M_i^*(u) \right\}=0
 \]
 and 
 \[
@@ -441,14 +508,13 @@ n^{-1}\sum_{i=1}^nX_i\left[m_i\hat\Lambda_n^{-1}\{Y_i^*(\hat \alpha_n)\} - e^{X_
 
 ## Asymptotic Results
 
-\begin{theorem}\label{thm:weak}
+
 Under Conditions 1--5, $n^{1/2}(\hat\alpha_n-\alpha, \hat\beta_n-\beta)$
 converges weakly to a multivariate normal distribution with mean zero and
 covariance matrix $\Sigma(\alpha,\beta)$ specified in the Appendix 1 of the Supplementary material.
 Furthermore, for the estimated baseline rate function, we have
 $n^{1/2}\{\hat\Lambda_n(t,\hat\alpha_n)-\Lambda_0(t)\}$, $t\in [0,\tau]$,
 converges weakly to a mean-zero Gaussian process.
-\end{theorem}
 
 
 ## Variance Estimation
@@ -473,14 +539,80 @@ converges weakly to a mean-zero Gaussian process.
 ```{r sc}
 summary(fit <- reReg(reSurv(t.stop, id, event, death) ~ sex + chemo,
                      data = subset(readmission, id < 50), 
-                     method = "cox.LWYY"))
+                     method = "sc.XCYH", se = "resampling", B = 50))
 ```
 
 ## Joint Modeling with a Terminal Event
 
+- Explicitly model the terminal event in addition to the model for the recurrent event model
+
+- Cox-type 
+  + noninformative censoring: @ghosh2002
+  + informative censoring: @Huang2004
+
+- Accelerated mean 
+  + noninformative censoring: @ghosh2003
+  + informative censoring: @xu2017joint
+
+
+## Cox-Type under Informative Censoring
+
+- @Huang2004: Joint model with a shared frailty
+\begin{equation*}
+\left\{\begin{matrix}
+\mbox{Rate:} & \lambda(t) = Z\lambda_0(t) e^{X^\top\alpha}\\ 
+\mbox{Hazard:} &  h(t) = Zh_0(t) e^{X^\top\beta}.
+\end{matrix}\right.
+\end{equation*}
+
+- Identifiability assumption: $\Lambda_0(\tau) = 1$ and $E(Z|X) = E(Z) = \mu_Z$ is a constant.
+
+- Two-step estimation
+  + First estimate $\alpha$ and $\Lambda()$ [@Wang2001]
+  - Second estimate $\beta$ and $H()$ with the "borrow-strength" method, i.e., plugging an estimate of $Z_i$ from a byproduct of the first step
+
+## Cox-Type under Informative Censoring
+
+```{r coxHW}
+summary(fit <- reReg(reSurv(t.stop, id, event, death) ~ sex + chemo,
+                     data = subset(readmission, id < 50), 
+                     method = "sc.XCYH", se = "resampling", B = 50))
+```
+
+
+## Accelerated Mean under Informative Censoring
+
+
+- @xu2017joint: Joint model with a shared frailty
+\begin{equation*}
+\left\{\begin{matrix}
+\mbox{Rate:} & \lambda(t) = Z\lambda_0(te^{X^\top\alpha}) e^{X^\top\alpha}\\ 
+\mbox{Hazard:} &  h(t) = Zh_0(te^{X^\top\beta}) e^{X^\top\beta}.
+\end{matrix}\right.
+\end{equation*}
+
+- Identifiability assumption: $\Lambda_0(\tau) = 1$ and $E(Z|X) = E(Z) = \mu_Z$ is a constant.
+
+- Two step estimation
+  + First estimate $\alpha$ and $\Lambda()$ based on the transformed time scale
+  + Second estimate $\beta$ and $H()$ using the borrow-strength method [@Huang2004]
+
+
+## Accelerated Mean [@xu2017joint]
+
+```{r amXCHWY}
+summary(fit <- reReg(reSurv(t.stop, id, event, death) ~ sex + chemo,
+                     data = subset(readmission, id < 50), 
+                     method = "am.XCHWY", se = "resampling", B = 50))
+```
+
+
 ## Further Topics
 
-- Panel count data (interval censored recurrent event data)
+- Simulation of event times with possibly informative censoring (`reReg::simSC()` and `reda::simEvent`)
+
+- Panel count data (interval censored recurrent event data) with package __spef__
+  [@chiou2018semiparametric]
 
 - Zero inflated model (hurdle model)
 
