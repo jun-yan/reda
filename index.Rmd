@@ -7,17 +7,20 @@ author: |
   | University of Connecticut
 date: November 2, 2018
 bibliography: [packages.bib, reReg.bib, reda.bib]
+header-includes:
+    - \newcommand{\E}{\mathbb{E}}
+    - \newcommand{\dd}{\mathrm{d}}
+    - \newcommand{\sgn}{\mathrm{sgn}}
+    - \newcommand{\bx}{\textbf{x}}
+    - \newcommand{\bX}{\textbf{X}}
+    - \newcommand{\bz}{\textbf{z}}
+    - \newcommand{\bbeta}{\boldsymbol{\beta}}
+    - \newcommand{\bPsi}{\boldsymbol{\Psi}}
+    - \newcommand{\chunksize}{\fontsize{7.6pt}{8pt}\selectfont}
 link-citation: yes
+urlcolor: blue
 ---
 
-\newcommand{\E}{\mathbb{E}}
-\newcommand{\dd}{\mathrm{d}}
-\newcommand{\sgn}{\mathrm{sgn}}
-\newcommand{\bx}{\textbf{x}}
-\newcommand{\bX}{\textbf{X}}
-\newcommand{\bz}{\textbf{z}}
-\newcommand{\bbeta}{\boldsymbol{\beta}}
-\newcommand{\bPsi}{\boldsymbol{\Psi}}
 
 ## Preliminaries
 
@@ -39,20 +42,32 @@ link-citation: yes
 
 - Recurrent Event Data Analysis with R
 
-## R Packages
+## R Packages {.maxHeight600 }
 
 ```{r setup, include=FALSE, echo = FALSE}
 options(width = 90)
+
+## decrease font size in code chunks for beamer
+if (knitr::is_latex_output()) {
+    ## https://stackoverflow.com/questions/
+    ## 25646333/code-chunk-font-size-in-rmarkdown-with-knitr-and-latex
+    knitr::opts_chunk$set(size = "chunksize")
+    def.chunk.hook  <- knitr::knit_hooks$get("chunk")
+    knitr::knit_hooks$set(chunk = function(x, options) {
+        paste0("\\bigskip\\", options$size, "\n", x, "\n", "\\normalsize")
+    })
+}
 ```
 
 ```{r need-packages}
 ##' Load needed packages, and install them if not installed.
 ##'
 ##' @usage need.packages(pkg)
-##' @param pkg A character vector specifying the packages needed to reproduce
-##'     this document.
-##' @param ... Other arguments passed to function \code{\link[base]require}.
-##' @return NULL invisibly.
+##' @param pkg A character vector specifying the packages needed to
+##'     reproduce this document.
+##' @param ... Other arguments passed to function
+##'     \code{\link[base]require}.
+##' @return \code{NULL} invisibly.
 ##' @examples
 ##' need.pacakges(c("ggplot2", "geepack"))
 need.packages <- function(pkg, ...)
@@ -74,7 +89,7 @@ need.packages(pkgs)
 ```{r include = FALSE, echo = FALSE}
 ## automatically create a bib database for R packages
 knitr::write_bib(c(
-  # .packages(), 
+  # .packages(),
   pkgs
   ), 'packages.bib')
 ```
@@ -168,7 +183,7 @@ r(t) = \E\left[\lim_{\delta \to 0}\frac{N(t + \delta) - N(t-)}{\delta}\right] = 
 
 - Robust MCF [@lawless1995some]
 \[
-  \hat\mu_n(t) = \sum_{i = 1}^n\int_0^t R_\cdot^{-1}(t) \dd N_i(t), 
+  \hat\mu_n(t) = \sum_{i = 1}^n\int_0^t R_\cdot^{-1}(t) \dd N_i(t),
 \]
 where $R_\cdot(t) = \sum_{i=1}^n R_i(t)$, and
 $R_i(t) = 1(Y_i > t)$ is the at-risk indicator.
@@ -187,7 +202,8 @@ plot(mymcf, conf.int = TRUE, mark.time = TRUE, addOrigin = TRUE, col = 2) +
 ## Group Comparison with MCF
 
 ```{r mcfComp}
-mcf0 <- reda::mcf(reda::Survr(id, t.stop, event) ~ chemo, data = readmission)
+mcf0 <- reda::mcf(reda::Survr(id, t.stop, event) ~ chemo,
+                  data = readmission)
 plot(mcf0, conf.int = TRUE)
 ```
 
@@ -199,13 +215,14 @@ plot(mcf0, conf.int = TRUE)
 ```
 
 ---
+
 ```{r plotMcfDiff}
 plot(myMcfDiff)
 ```
 
 ## Flexible Baseline Rate with Shape-Restricted Splines
 ```{r splines}
-mySplFit <- reda::rateReg(reda::Survr(id, t.stop, event) ~ chemo + sex, 
+mySplFit <- reda::rateReg(reda::Survr(id, t.stop, event) ~ chemo + sex,
                           data = readmission)
 summary(mySplFit)
 ```
@@ -223,7 +240,7 @@ plot(mcf(mySplFit), conf.int = TRUE)
   + Intensity
 
   + Rate
-  
+
   + Mean
 
 - Gap times
@@ -243,10 +260,10 @@ plot(mcf(mySplFit), conf.int = TRUE)
 ## Semiparametric Regression for Gap Times
 
 - Cox-type
-  + Conditional 
+  + Conditional
   + Marginal
   + `coxph()` in package __survival__
-  
+
 - Accelerated failure time (AFT)
 
 - General class of hazards regression [@chen2001general]
@@ -271,24 +288,24 @@ plot(mcf(mySplFit), conf.int = TRUE)
 ## Regression for Counting Process: Noninformative Censoring
 
 + Proportional intensities [@andersen1982]
-  
+
 + Proportional rates (means) [@pepe1993some; @lawless1995some; @lin2000semiparametric]
-  
+
 + Accelerated rate [@chen2000estimating]
-  
+
 + Accelerated mean [@lin1998]
-  
+
 + Generalized scale change [@sun2008]
-  
+
 + Additive rate [@schaubel2006semiparametric]
-  
+
 + Additive-multiplicative rate [@liu2010additive]
 
 ## Informative Censoring
 
 - Failure to account gives misleading results
 
-- Joint frailty models 
+- Joint frailty models
   + Cox-type [@liu2004; @ye2007; @Kalbfleisch2013]
   + Transformation [@zeng2009semiparametric]
 
@@ -341,7 +358,7 @@ r(t \mid X) = r_0(t) \exp(X^{\top}(t) \beta)
 
 ```{r cox.lwyy}
 summary(fit <- reReg(reSurv(t.stop, id, event, death) ~ sex + chemo,
-                     data = subset(readmission, id < 50), 
+                     data = subset(readmission, id < 50),
                      method = "cox.LWYY"))
 ```
 
@@ -362,7 +379,7 @@ where $E(Z \mid X) = E(Z) = \mu_Z$ and $\Lambda(\tau) = 1$ for identifiability.
 
 ## Accelerated Mean
 
-- Uninformative censoring 
+- Uninformative censoring
 \[
   \mu(t \mid X) = \mu_0(t e^{-X^{\top}\beta})
 \]
@@ -384,12 +401,12 @@ where $E(Z \mid X) = E(Z) = \mu_Z$ and $\Lambda(\tau) = 1$ for identifiability.
 \]
   + $Y \perp N() \mid (X, Z)$ but no model specified for $Y$
   + No distributional assumption for $Z$
-  
+
 - Identifiability conditions:
   + $\int_0^\tau r_0(u) \dd u = 1$.
   + $E(Z \mid X) = \mu_z$ is an unknown constant.
   + $r_0()$ is not Weibull.
-  
+
 - Submodels and Model Selection
   + Cox-type model: $\alpha = 0$
   + Accelerated rate model: $\beta = 0$
@@ -400,15 +417,15 @@ where $E(Z \mid X) = E(Z) = \mu_Z$ and $\Lambda(\tau) = 1$ for identifiability.
 - The interpretation of the covariate effects involves two types of modification on the rate function:
 
   + a scale-change effect that alters the time scale by a factor of $e^{X_i^\top\alpha}$.
-  
-  + a multiplicative effect that modifies the magnitude of the rate function by 
+
+  + a multiplicative effect that modifies the magnitude of the rate function by
 a factor of $e^{X_i^\top\beta}$.
 
 - When the two effects have a specific form ($\alpha = \beta$), the combined effect transforms the time scael of the mean function.
 
 ## Estimating Procedure
 
-- Two step estimation: 
+- Two step estimation:
 
   + First $\alpha$ and $\Lambda_0(t) = \int_0^t\lambda_0(u) \dd u$
 
@@ -422,7 +439,7 @@ a factor of $e^{X_i^\top\beta}$.
 
 ## Estimation of $\alpha$ and $\Lambda_0$
 
-- Consider time transformation (scale change) 
+- Consider time transformation (scale change)
   + $t^*_{ij} = t_{ij}e^{X_i^\top \alpha}$
   + $Y_i^* = Y_ie^{X_i^\top \alpha}$
 
@@ -454,14 +471,14 @@ a factor of $e^{X_i^\top\beta}$.
 
 - We derive a zero mean stochastic process
 $$M_i^*(t) = N_i^*(t) - \int_0^tR_i^*(u)\dd H(u), $$
-for $R_i^*(t) = \sum_{j=1}^{m_i} {1}\{t_{ij}^*\le t\le Y_i^*\}$, 
+for $R_i^*(t) = \sum_{j=1}^{m_i} {1}\{t_{ij}^*\le t\le Y_i^*\}$,
 $H(t) = \log \Lambda_0(t)$.
 
-- $M_i^*(t)$ is a zero mean stochastic process, we have 
+- $M_i^*(t)$ is a zero mean stochastic process, we have
 \[
 \E\left\{ \sum_{i=1}^n\int_0^t\dd M_i^*(u) \right\}=0
 \]
-and 
+and
 \[
 \E\left\{ \sum_{i=1}^n\int_0^tX_i\,\dd M_i^*(u) \right\}=0
 \]
@@ -484,7 +501,7 @@ $$\widehat H_n(t, a) = -\int_t^\infty\frac{\sum_{i=1}^n\dd N_i^*(u)}{\sum_{i=1}^
 ## Estimation of $\beta$
 
 - Under our model $\lambda_i(t) = Z_i\lambda_0(te^{X_i^\top\alpha})e^{X_i^\top\beta}$,
-$m_i$ satisfies 
+$m_i$ satisfies
 $$\E(m_i|X_i, Y_i^*, Z_i) = Z_i\Lambda_0(Y_i^*)e^{X_i^\top(\beta-\alpha)} $$
 
 - This gives an estimating equation to solve for $\beta$:
@@ -508,13 +525,13 @@ converges weakly to a mean-zero Gaussian process.
 
 - The target sandwich variance estimator:
  $\Sigma = J_{\alpha, \beta}^{-1}V_{\alpha, \beta}J_{\alpha, \beta}^{-1}$.
- 
+
 - A resampling approach to estimate the covariance matrix [@zeng2008]
 
   + Estimation of $V_{\alpha,\beta}$: Perturbed estimating functions with
     multipliers of unit mean and unit variance.
       - No need to solve the equations.
-    
+
   - Estimation of the slope matrix $J_{\alpha,\beta}$:
     Regressing perturbed estimating functions on perturbation.
 
@@ -525,7 +542,7 @@ converges weakly to a mean-zero Gaussian process.
 
 ```{r sc}
 summary(fit <- reReg(reSurv(t.stop, id, event, death) ~ sex + chemo,
-                     data = subset(readmission, id < 50), 
+                     data = subset(readmission, id < 50),
                      method = "sc.XCYH", se = "resampling", B = 50))
 ```
 
@@ -533,11 +550,11 @@ summary(fit <- reReg(reSurv(t.stop, id, event, death) ~ sex + chemo,
 
 - Explicitly model the terminal event in addition to the model for the recurrent event model
 
-- Cox-type 
+- Cox-type
   + noninformative censoring: @ghosh2002
   + informative censoring: @Huang2004
 
-- Accelerated mean 
+- Accelerated mean
   + noninformative censoring: @ghosh2003
   + informative censoring: @xu2017joint
 
@@ -547,7 +564,7 @@ summary(fit <- reReg(reSurv(t.stop, id, event, death) ~ sex + chemo,
 - @Huang2004: Joint model with a shared frailty
 \begin{equation*}
 \left\{\begin{matrix}
-\mbox{Rate:} & \lambda(t) = Z\lambda_0(t) e^{X^\top\alpha}\\ 
+\mbox{Rate:} & \lambda(t) = Z\lambda_0(t) e^{X^\top\alpha}\\
 \mbox{Hazard:} &  h(t) = Zh_0(t) e^{X^\top\beta}.
 \end{matrix}\right.
 \end{equation*}
@@ -562,7 +579,7 @@ summary(fit <- reReg(reSurv(t.stop, id, event, death) ~ sex + chemo,
 
 ```{r coxHW}
 summary(fit <- reReg(reSurv(t.stop, id, event, death) ~ sex + chemo,
-                     data = subset(readmission, id < 50), 
+                     data = subset(readmission, id < 50),
                      method = "cox.HW", se = "resampling", B = 50))
 ```
 
@@ -573,7 +590,7 @@ summary(fit <- reReg(reSurv(t.stop, id, event, death) ~ sex + chemo,
 - @xu2017joint: Joint model with a shared frailty
 \begin{equation*}
 \left\{\begin{matrix}
-\mbox{Rate:} & \lambda(t) = Z\lambda_0(te^{X^\top\alpha}) e^{X^\top\alpha}\\ 
+\mbox{Rate:} & \lambda(t) = Z\lambda_0(te^{X^\top\alpha}) e^{X^\top\alpha}\\
 \mbox{Hazard:} &  h(t) = Zh_0(te^{X^\top\beta}) e^{X^\top\beta}.
 \end{matrix}\right.
 \end{equation*}
@@ -589,7 +606,7 @@ summary(fit <- reReg(reSurv(t.stop, id, event, death) ~ sex + chemo,
 
 ```{r amXCHWY}
 summary(fit <- reReg(reSurv(t.stop, id, event, death) ~ sex + chemo,
-                     data = subset(readmission, id < 50), 
+                     data = subset(readmission, id < 50),
                      method = "am.XCHWY", se = "resampling", B = 50))
 ```
 
@@ -605,4 +622,5 @@ summary(fit <- reReg(reSurv(t.stop, id, event, death) ~ sex + chemo,
 
 - Dynamic time-varying coefficient model
 
-## References {-}
+
+## References {.allowframebreaks}

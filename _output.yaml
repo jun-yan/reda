@@ -15,3 +15,11 @@ revealjs::revealjs_presentation:
     slideNumber: 'c/t'
     previewLinks: false
     controls: false
+
+beamer_presentation:
+  toc: false
+  fig_width: 7
+  fig_height: 4
+  fig_caption: true
+  slide_level: 2
+  keep_tex: no

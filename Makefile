@@ -4,7 +4,9 @@ output_dir := docs
 
 ## corresponding output names
 html_out := $(patsubst %.Rmd,docs/%.html,$(rmd_source))
-tmp_out := $(patsubst %.Rmd,%.html,$(rmd_source))
+pdf_out := docs/slides.pdf
+tmp_html_out := $(patsubst %.Rmd,%.html,$(rmd_source))
+tmp_pdf_out := $(patsubst %.Rmd,%.pdf,$(rmd_source))
 tmp_files := $(patsubst %.Rmd,%_files,$(rmd_source))
 r_out := $(patsubst %.Rmd,%.R,$(rmd_source))
 
@@ -14,13 +16,21 @@ dep_pkg := revealjs
 
 
 .PHONY: all
-all: $(html_out) $(r_out)
+all: $(pdf_out) $(html_out) $(r_out)
+
+$(pdf_out): $(rmd_source) _output.yaml
+	@$(MAKE) -s check
+	@echo "compiling to pdf slides..."
+	@Rscript --vanilla -e \
+	"rmarkdown::render('$(rmd_source)', 'beamer_presentation')"
+	@mv $(tmp_pdf_out) $@
 
 $(html_out): $(rmd_source) _output.yaml
 	@$(MAKE) -s check
 	@echo "compiling to html slides..."
-	@Rscript --vanilla -e "rmarkdown::render('$(rmd_source)')"
-	@mv $(tmp_out) docs/
+	@Rscript --vanilla -e \
+	"rmarkdown::render('$(rmd_source)', 'revealjs::revealjs_presentation')"
+	@mv $(tmp_html_out) docs/
 	@rm -rf docs/$(tmp_files)
 	@mv $(tmp_files) docs/
 
